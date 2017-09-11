@@ -13,8 +13,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.TimeZone;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -48,7 +47,8 @@ public class SDEV425HW2 extends Application {
     private String ruleInvoked;
     private String appState;
     // CONVERT timestamp TO STRING
-    SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+    final SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss, z");
+    
     
     
     
@@ -103,6 +103,8 @@ public class SDEV425HW2 extends Application {
 
             @Override
             public void handle(ActionEvent e) {
+                // Set Timezone to UTC
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                 // Get timestamp of login attempt
                 timestamp = sdf.format(new Date());
                 // Authenticate the user
@@ -169,6 +171,8 @@ public class SDEV425HW2 extends Application {
         primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent we) {
+                // Set Timezone to UTC
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                 // Set log values
                 timestamp = sdf.format(new Date());
                 user = userTextField.getText();
