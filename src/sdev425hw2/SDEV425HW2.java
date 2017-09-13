@@ -43,13 +43,20 @@ public class SDEV425HW2 extends Application {
     private String timestamp;
     private String user;
     private String event;
-    private Boolean eventSuccess;
+    private boolean eventSuccess;
     private String ruleInvoked;
     private String appState;
     // CONVERT timestamp TO STRING
-    final SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss, z");
+    private final SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss, z");
     
+    // Increment counter
+    private int loginAttempts = 3;
+    private int count = 0;
     
+    // Create timer
+    private boolean timerOn = false;
+    private long startTime = 0;
+    private long stopTime = 0;
     
     
     @Override
@@ -95,8 +102,11 @@ public class SDEV425HW2 extends Application {
         // Add button to grid 1,4
         grid.add(btn, 1, 4);
 
-        final Text actiontarget = new Text();
-        grid.add(actiontarget, 1, 6);
+        final Text actiontarget1 = new Text();
+        final Text actiontarget2 = new Text();
+        grid.add(actiontarget1, 1, 6);
+        // Create action target for system lock message
+        grid.add(actiontarget2, 1, 7);
 
         // Set the Action when button is clicked
         btn.setOnAction(new EventHandler<ActionEvent>() {
@@ -110,48 +120,103 @@ public class SDEV425HW2 extends Application {
                 // Authenticate the user
                 boolean isValid = authenticate(userTextField.getText(), 
                         pwBox.getText());
-                // If valid clear the grid and Welcome the user
-                if (isValid) {
-                    // Set log variables
-                    user = userTextField.getText();
-                    event = "login attempt";
-                    eventSuccess = true;
-                    ruleInvoked = "none";
-                    appState = "Secure / Active User";
-                    // Log successful login
-                    try {
-                        log(LOG, timestamp, user, event, eventSuccess, 
-                                ruleInvoked, appState);
-                    } 
-                    catch (IOException ioe) {
-                        System.out.println("Logging error: " + ioe.getMessage());
+                // Check if timerOn and loginAttempts need to be reset
+                timerResetCheck(timerOn);
+                // FOR TESTING PURPOSES ONLY
+                System.out.println("Timer is on: " + timerOn);
+                // Check if loginAttempts remain
+                if (loginAttempts != 0) {
+                    // If valid clear the grid and Welcome the user
+                    if (isValid) {
+                        // Set log variables
+                        user = userTextField.getText();
+                        event = "login attempt";
+                        eventSuccess = true;
+                        ruleInvoked = "none";
+                        appState = "Secure / Active User";
+                        // Log successful login
+                        try {
+                            log(LOG, timestamp, user, event, eventSuccess, 
+                                    ruleInvoked, appState);
+                        } 
+                        catch (IOException ioe) {
+                            System.out.println("Logging error: " + ioe.getMessage());
+                        }
+                        // Reset login counter on authenticated logon
+                        loginAttempts = 3;
+                        grid.setVisible(false);
+                        GridPane grid2 = new GridPane();
+                        // Align to Center
+                        // Note Position is geometric object for alignment
+                        grid2.setAlignment(Pos.CENTER);
+                         // Set gap between the components
+                        // Larger numbers mean bigger spaces
+                        grid2.setHgap(10);
+                        grid2.setVgap(10);
+                        Text scenetitle = new Text("Welcome " + 
+                                userTextField.getText() + "!");
+                        // Add text to grid 0,0 span 2 columns, 1 row
+                        grid2.add(scenetitle, 0, 0, 2, 1);
+                        Scene scene = new Scene(grid2, 500, 400);
+                        primaryStage.setScene(scene);
+                        primaryStage.show();
+                       // If Invalid Ask user to try again
+                    } else {
+                        // Decrement loginAttempts available on unsuccessful attempt
+                        loginAttempts--;
+                        // Increment count on unsuccessful logon attempt
+                        count++;
+                        // FOR TESTING PURPOSES ONLY
+                        System.out.println("Login attempts: " + count);
+                        // Set Log variables
+                        user = userTextField.getText();
+                        event = "login attempt";
+                        eventSuccess = false;
+                        // For now, ruleInvoked and appState remain generic
+                        // These will change when other security rules are added
+                        ruleInvoked = "Unsuccessful Logon Attempt";
+                        appState = "No Active User";
+                        try {
+                            log(LOG, timestamp, user, event, eventSuccess, 
+                                    ruleInvoked, appState);
+                        } 
+                        catch (IOException ioe) {
+                            System.out.println("Logging error: " + ioe.getMessage());
+                        }
+
+                        final Text actiontarget = new Text();
+                        // Clear gridpane to remove actiontarget message
+                        grid.getChildren().clear();
+                        // Recreate gridpane with initial node objects
+                        grid.add(scenetitle, 0, 0, 2, 1);
+                        grid.add(userName, 0, 1);
+                        grid.add(userTextField, 1, 1);
+                        grid.add(pw, 0, 2);
+                        grid.add(pwBox, 1, 2);
+                        grid.add(btn, 1, 4);
+                        grid.add(actiontarget, 1, 6);
+                        actiontarget.setFill(Color.FIREBRICK);
+                        actiontarget.setText("Please try again.");
                     }
-                    grid.setVisible(false);
-                    GridPane grid2 = new GridPane();
-                    // Align to Center
-                    // Note Position is geometric object for alignment
-                    grid2.setAlignment(Pos.CENTER);
-                     // Set gap between the components
-                    // Larger numbers mean bigger spaces
-                    grid2.setHgap(10);
-                    grid2.setVgap(10);
-                    Text scenetitle = new Text("Welcome " + 
-                            userTextField.getText() + "!");
-                    // Add text to grid 0,0 span 2 columns, 1 row
-                    grid2.add(scenetitle, 0, 0, 2, 1);
-                    Scene scene = new Scene(grid2, 500, 400);
-                    primaryStage.setScene(scene);
-                    primaryStage.show();
-                   // If Invalid Ask user to try again
+                // If no loginAttempts remain
                 } else {
-                    // Set Log variables
+                    // Each time the user reaches this point, the timer is
+                    // activated. Each unsuccessful attempt made during the
+                    // timer's run will reset the timer.
+                    count++; // increment count of unsuccessful attempts
+                    startTime = new Date().getTime(); // start of timer
+                    stopTime = startTime + 30000; // end of timer period
+                    timerOn = isTimerOn(stopTime); // turn timerOn to 'true'
+                    // FOR TESTING PURPOSES ONLY
+                    System.out.println("Login attempts: " + count);
+                    
+                    // Log system lock event
                     user = userTextField.getText();
-                    event = "login attempt";
+                    event = "WARNING--SYSTEM_LOCK_ENABLED";
                     eventSuccess = false;
-                    // For now, ruleInvoked and appState remain generic
-                    // These will change when other security rules are added
-                    ruleInvoked = "Unsuccessful Logon Attempt";
-                    appState = "No Active User";
+                    ruleInvoked = "AC-7 - Unsuccessful Logon Attempts";
+                    appState = "Account lock active";
+                    // Call log() with relevant data from above
                     try {
                         log(LOG, timestamp, user, event, eventSuccess, 
                                 ruleInvoked, appState);
@@ -160,10 +225,20 @@ public class SDEV425HW2 extends Application {
                         System.out.println("Logging error: " + ioe.getMessage());
                     }
                     
+                    // Recreate GridPane nodes
                     final Text actiontarget = new Text();
-                    grid.add(actiontarget, 1, 6);
+                    // Clear gridpane to remove actiontarget message
+                    grid.getChildren().clear();
+                    // Recreate gridpane with initial node objects
+                    grid.add(scenetitle, 0, 0, 2, 1);
+                    grid.add(userName, 0, 1);
+                    grid.add(userTextField, 1, 1);
+                    grid.add(pw, 0, 2);
+                    grid.add(pwBox, 1, 2);
+                    grid.add(btn, 1, 4);
+                    grid.add(actiontarget, 1, 7);
                     actiontarget.setFill(Color.FIREBRICK);
-                    actiontarget.setText("Please try again.");
+                    actiontarget.setText("Login function temporarily locked.");
                 }
             }
         });
@@ -178,7 +253,8 @@ public class SDEV425HW2 extends Application {
                 user = userTextField.getText();
                 event = "Application closed";
                 eventSuccess = true;
-                ruleInvoked = " login attempts";
+                // The number of unsuccessful login attempts during this session
+                ruleInvoked = count + " unsuccessful login attempts during this session";
                 appState = "Inactive";
                 try {
                     log(LOG, timestamp, user, event, eventSuccess, 
@@ -217,7 +293,44 @@ public class SDEV425HW2 extends Application {
         return isValid;
     }
     
+    // Timer method to check if 30 second duration has been met.
+    // Returns true if login function is currently being blocked.
+    public boolean isTimerOn(long stopTime) {
+        boolean timerIsOn = true;
+        if (stopTime == 0) {
+            timerIsOn = false;
+        } else {
+            long currentTime = new Date().getTime();
+            if (currentTime >= stopTime) {
+                timerIsOn = false;
+            }
+        }
+        return timerIsOn;
+    }
     
+    // Method to reset login attempt counter and timerOn variables
+    public void timerResetCheck(boolean timerOn) {
+        // If the timerOn was switched to true, but now it's switched off
+        // then reset variables and log the change
+        if (timerOn == true && isTimerOn(stopTime) == false) {
+            this.timerOn = false;
+            loginAttempts = 3;
+            stopTime = 0;
+            startTime = 0;
+            user = "SYS";
+            event = "INFO--SYSTEM_LOCK_DEACTIVATED.";
+            eventSuccess = true;
+            ruleInvoked = "System Lock Lifted; lock duration exceeded";
+            appState = "System active, user status unknown";
+            try {
+                log(LOG, timestamp, user, event, eventSuccess, 
+                        ruleInvoked, appState);
+            } 
+            catch (IOException ioe) {
+                System.out.println("Logging error: " + ioe.getMessage());
+            }
+        }
+    }
     
     /**
      * <title> LOG WRITING METHOD </title>
@@ -231,7 +344,7 @@ public class SDEV425HW2 extends Application {
      * @throws java.io.IOException
      */
     public final void log(File LOG, String timestamp, String user, String event, 
-            Boolean eventSuccess, String ruleInvoked, String appState) 
+            boolean eventSuccess, String ruleInvoked, String appState) 
             throws IOException {
         
         Writer out = null;
@@ -244,7 +357,7 @@ public class SDEV425HW2 extends Application {
             String evSuccessInStr = eventSuccess ? "true" : "false";
             
             // Specify UTF-8 encoding in OSW to avoid default encoding
-            // Also use "true" as second param to FOS to allow append function
+            // Also use "true" as second param to FOS to allow append method
             out = new BufferedWriter(
                     new OutputStreamWriter(
                     new FileOutputStream(LOG, true), "UTF-8"));
@@ -268,8 +381,9 @@ public class SDEV425HW2 extends Application {
                 }
             }
             catch(IOException ioe) {
-                System.out.println("Problem closing output streams.");
-                ioe.getMessage();
+                System.out.println("Problem closing output streams: " + 
+                        ioe.getMessage());
+                
             }
         }
     }
