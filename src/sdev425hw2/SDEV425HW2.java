@@ -102,11 +102,8 @@ public class SDEV425HW2 extends Application {
         // Add button to grid 1,4
         grid.add(btn, 1, 4);
 
-        final Text actiontarget1 = new Text();
-        final Text actiontarget2 = new Text();
-        grid.add(actiontarget1, 1, 6);
-        // Create action target for system lock message
-        grid.add(actiontarget2, 1, 7);
+        final Text actiontarget = new Text();
+        grid.add(actiontarget, 1, 6);
 
         // Set the Action when button is clicked
         btn.setOnAction(new EventHandler<ActionEvent>() {
@@ -144,22 +141,83 @@ public class SDEV425HW2 extends Application {
                         }
                         // Reset login counter on authenticated logon
                         loginAttempts = 3;
+                        
+                        // Hide main grid
                         grid.setVisible(false);
-                        GridPane grid2 = new GridPane();
-                        // Align to Center
-                        // Note Position is geometric object for alignment
-                        grid2.setAlignment(Pos.CENTER);
-                         // Set gap between the components
-                        // Larger numbers mean bigger spaces
-                        grid2.setHgap(10);
-                        grid2.setVgap(10);
-                        Text scenetitle = new Text("Welcome " + 
-                                userTextField.getText() + "!");
-                        // Add text to grid 0,0 span 2 columns, 1 row
-                        grid2.add(scenetitle, 0, 0, 2, 1);
-                        Scene scene = new Scene(grid2, 500, 400);
+                        // Write system use notification to a new GridPane
+                        GridPane grid3 = new GridPane();
+                        grid3.setAlignment(Pos.CENTER);
+                        grid3.setHgap(10);
+                        grid3.setVgap(10);
+                        Text notificationTitle = new Text("Welcome!");
+                        grid3.add(notificationTitle, 0, 0, 2, 1);
+                        Text notification1 = new Text("Please note, you are "
+                                + "currently logged into a U.S. Government "
+                                + "information system.");
+                        grid3.add(notification1, 0, 1, 2, 1);
+                        Text notification2 = new Text("Information system usage "
+                                + "may be monitored, recorded, and subject to "
+                                + "audit.");
+                        grid3.add(notification2, 0, 2, 2, 1);
+                        Text notification3 = new Text("Unauthorized use of this "
+                                + "information system is prohibited and subject "
+                                + "to criminal and civil penalties.");
+                        grid3.add(notification3, 0, 3, 2, 1);
+                        Text notification4 = new Text("Use of this information "
+                                + "system indicates consent to monitoring and "
+                                + "recording.");
+                        grid3.add(notification4, 0, 4, 2, 1);
+                        Text notification5 = new Text("This system may only "
+                                + "be used to stare at the welcome message it "
+                                + "generates. Enjoy!");
+                        grid3.add(notification5, 0, 5, 2, 1);
+                        Button agree = new Button("I Agree to These Terms");
+                        grid3.add(agree, 1, 7);
+                        
+                        // Define parameter of new GridPane and show() it
+                        Scene scene = new Scene(grid3, 650, 400);
                         primaryStage.setScene(scene);
                         primaryStage.show();
+                        
+                        // Button event handler
+                        agree.setOnAction(new EventHandler<ActionEvent>() {
+                            @Override
+                            public void handle(ActionEvent ae) {
+                                // Log user consent
+                                user = userTextField.getText();
+                                event = "INFO--USER_CONSENT_GRANTED";
+                                eventSuccess = true;
+                                ruleInvoked = "AC-8: System Use Notification";
+                                appState = "Active User";
+                                try {
+                                    log(LOG, timestamp, user, event, eventSuccess, 
+                                            ruleInvoked, appState);
+                                } 
+                                catch (IOException ioe) {
+                                    System.out.println("Logging error: " + ioe.getMessage());
+                                }
+                                // Make grid3 invisible
+                                grid3.setVisible(false);
+                                // Create new GridPane to display welcome message
+                                GridPane grid2 = new GridPane();
+                                // Align to Center
+                                // Note Position is geometric object for alignment
+                                grid2.setAlignment(Pos.CENTER);
+                                 // Set gap between the components
+                                // Larger numbers mean bigger spaces
+                                grid2.setHgap(10);
+                                grid2.setVgap(10);
+                                Text scenetitle = new Text("Welcome " + 
+                                        userTextField.getText() + "!");
+                                // Add text to grid 0,0 span 2 columns, 1 row
+                                grid2.add(scenetitle, 0, 0, 2, 1);
+                                Scene scene = new Scene(grid2, 500, 400);
+                                primaryStage.setScene(scene);
+                                primaryStage.show();
+                            }
+                        });
+                        
+                        
                        // If Invalid Ask user to try again
                     } else {
                         // Decrement loginAttempts available on unsuccessful attempt
@@ -331,7 +389,7 @@ public class SDEV425HW2 extends Application {
             }
         }
     }
-    
+   
     /**
      * <title> LOG WRITING METHOD </title>
      * @param LOG
