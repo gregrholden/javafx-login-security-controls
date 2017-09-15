@@ -5,16 +5,10 @@
  */
 package sdev425hw2;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.TimeZone;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -41,18 +35,12 @@ public class SDEV425HW2 extends Application {
     private static final File LOG = new File(
         "C:\\Users\\admin\\Documents\\NetBeansProjects\\SDEV425HW2\\log.txt"
     );
-    private String timestamp;
+    
+    // User
     private String user;
-    private String event;
-    private boolean eventSuccess;
-    private String ruleInvoked;
-    private String appState;
-    // CONVERT timestamp TO STRING
-    private final SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss, z");
     
     // Increment counter
     private int loginAttempts = 3;
-    private int count = 0;
     
     private int authCounter = 0;
     
@@ -113,12 +101,9 @@ public class SDEV425HW2 extends Application {
 
             @Override
             public void handle(ActionEvent e) {
-                // Set Timezone to UTC
-                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                // Get timestamp of login attempt
-                timestamp = sdf.format(new Date());
+                user = userTextField.getText();
                 // Authenticate the user
-                boolean isValid = authenticate(userTextField.getText(), 
+                boolean isValid = authenticate(user, 
                         pwBox.getText());
                 // Check if timerOn and loginAttempts need to be reset
                 timerResetCheck(timerOn);
@@ -126,20 +111,17 @@ public class SDEV425HW2 extends Application {
                 if (loginAttempts != 0) {
                     // If valid clear the grid and Welcome the user
                     if (isValid) {
-                        // ADD TO AUDIT LOG
-                        user = userTextField.getText();
-                        event = "login attempt";
-                        eventSuccess = true;
-                        ruleInvoked = "none";
-                        appState = "Secure / Active User";
-                        // Log successful login
+                        
+                        // Log Successful Logon
                         try {
-                            log(LOG, timestamp, user, event, eventSuccess, 
-                                    ruleInvoked, appState);
-                        } 
-                        catch (IOException ioe) {
-                            System.out.println("Logging error: " + ioe.getMessage());
+                            Log.log(LOG, user, true, "ACCESS", 
+                                    "Non-authenticated Logon", "Main");
                         }
+                        catch (IOException ioe) {
+                            System.out.println("Logging error: " + 
+                                    ioe.getMessage());
+                        }
+                        
                         // Reset login counter on authenticated logon
                         loginAttempts = 3;
                         
@@ -198,19 +180,15 @@ public class SDEV425HW2 extends Application {
                                         "gregrholden@gmail.com", "Lilach_83", 
                                         "SDEV425: User Authentication", token);
                                 
-                                // ADD TO AUDIT LOG
-                                // Log user consent
-                                user = userTextField.getText();
-                                event = "INFO--USER_CONSENT_GRANTED: AUTHENTICATION_TOKEN_SENT";
-                                eventSuccess = true;
-                                ruleInvoked = "AC-8: System Use Notification";
-                                appState = "Active User";
+                                // Log Info Message
                                 try {
-                                    log(LOG, timestamp, user, event, eventSuccess, 
-                                            ruleInvoked, appState);
-                                } 
+                                    Log.log(LOG, user, true, "INFO", 
+                                            "Consent Granted, Auth Token Sent", 
+                                            "Use Notification");
+                                }
                                 catch (IOException ioe) {
-                                    System.out.println("Logging error: " + ioe.getMessage());
+                                    System.out.println("Logging error: " + 
+                                            ioe.getMessage());
                                 }
                                 
                                 // GET AUTHENTICATION FROM USER
@@ -247,8 +225,21 @@ public class SDEV425HW2 extends Application {
                                     public void handle(ActionEvent auth) {
                                         // Check that token and user auth code match
                                         String userAuth = authToken.getText();
+                                        
                                         // If Authentic User:
                                         if (userAuth.equals(token)) {
+                                            
+                                            // Log Access Message
+                                            try {
+                                                Log.log(LOG, user, true, "ACCESS", 
+                                                        "Authenticated Logon", 
+                                                        "Authentication");
+                                            }
+                                            catch (IOException ioe) {
+                                                System.out.println("Logging error: " + 
+                                                        ioe.getMessage());
+                                            }
+                                            
                                             authCounter = 0; // reset counter
                                             grid4.setVisible(false);
                                             // Create new GridPane to display welcome message
@@ -262,24 +253,53 @@ public class SDEV425HW2 extends Application {
                                             grid2.setVgap(10);
                                             Text scenetitle = new Text("Welcome " + 
                                                     userTextField.getText() + "!");
+                                            
                                             // Add text to grid 0,0 span 2 columns, 1 row
                                             grid2.add(scenetitle, 0, 0, 2, 1);
                                             Scene scene = new Scene(grid2, 500, 400);
                                             primaryStage.setScene(scene);
                                             primaryStage.show();
+                                            
                                         // If Not Authentic User:
                                         } else {
                                             authCounter++;
                                             if (authCounter <= 3) {
+                                                
+                                                // Log Alert
+                                                try {
+                                                    Log.log(LOG, user, false, 
+                                                            "ALERT", 
+                                                            "Failed Authentication Attempt", 
+                                                            "Authentication");
+                                                }
+                                                catch (IOException ioe) {
+                                                    System.out.println("Logging error: " + 
+                                                            ioe.getMessage());
+                                                }
+                                                
                                                 final Text actiontarget = new Text();
                                                 actiontarget.setFill(Color.FIREBRICK);
                                                 actiontarget.setText("Incorrect Code");
                                                 grid4.add(actiontarget, 1, 4);
                                             } else {
+                                                
+                                                // Log Alert
+                                                try {
+                                                    Log.log(LOG, user, false, 
+                                                            "ALERT", 
+                                                            "System Lock", 
+                                                            "Authentication");
+                                                }
+                                                catch (IOException ioe) {
+                                                    System.out.println("Logging error: " + 
+                                                            ioe.getMessage());
+                                                }
+                                                
                                                 grid4.getChildren().clear();
                                                 final Text actiontarget = new Text();
                                                 actiontarget.setFill(Color.FIREBRICK);
-                                                actiontarget.setText("System Locked. Please Exit.");
+                                                actiontarget.setText("System Locked. "
+                                                        + "Please Exit.");
                                                 grid4.add(actiontarget, 0, 1, 2, 1);
                                             }
                                             
@@ -294,26 +314,19 @@ public class SDEV425HW2 extends Application {
                     } else {
                         // Decrement loginAttempts available on unsuccessful attempt
                         loginAttempts--;
-                        // Increment count on unsuccessful logon attempt
-                        count++;
-                        // FOR TESTING PURPOSES ONLY
-                        System.out.println("Login attempts: " + count);
-                        // Set Log variables
-                        user = userTextField.getText();
-                        event = "login attempt";
-                        eventSuccess = false;
-                        // For now, ruleInvoked and appState remain generic
-                        // These will change when other security rules are added
-                        ruleInvoked = "Unsuccessful Logon Attempt";
-                        appState = "No Active User";
+                        
+                        // Log Alert
                         try {
-                            log(LOG, timestamp, user, event, eventSuccess, 
-                                    ruleInvoked, appState);
-                        } 
-                        catch (IOException ioe) {
-                            System.out.println("Logging error: " + ioe.getMessage());
+                            Log.log(LOG, user, false, 
+                                    "ALERT", 
+                                    "Unsuccessful Logon Attempt", 
+                                    "Main Page");
                         }
-
+                        catch (IOException ioe) {
+                            System.out.println("Logging error: " + 
+                                    ioe.getMessage());
+                        }
+                        
                         final Text actiontarget = new Text();
                         // Clear gridpane to remove actiontarget message
                         grid.getChildren().clear();
@@ -333,26 +346,20 @@ public class SDEV425HW2 extends Application {
                     // Each time the user reaches this point, the timer is
                     // activated. Each unsuccessful attempt made during the
                     // timer's run will reset the timer.
-                    count++; // increment count of unsuccessful attempts
                     startTime = new Date().getTime(); // start of timer
                     stopTime = startTime + 30000; // end of timer period
                     timerOn = isTimerOn(stopTime); // turn timerOn to 'true'
-                    // FOR TESTING PURPOSES ONLY
-                    System.out.println("Login attempts: " + count);
                     
-                    // Log system lock event
-                    user = userTextField.getText();
-                    event = "WARNING--SYSTEM_LOCK_ENABLED";
-                    eventSuccess = false;
-                    ruleInvoked = "AC-7 - Unsuccessful Logon Attempts";
-                    appState = "Account lock active";
-                    // Call log() with relevant data from above
+                    // Log Alert
                     try {
-                        log(LOG, timestamp, user, event, eventSuccess, 
-                                ruleInvoked, appState);
-                    } 
+                    Log.log(LOG, user, false, 
+                            "ALERT", 
+                            "System Lock", 
+                            "Main");
+                    }
                     catch (IOException ioe) {
-                        System.out.println("Logging error: " + ioe.getMessage());
+                        System.out.println("Logging error: " + 
+                                ioe.getMessage());
                     }
                     
                     // Recreate GridPane nodes
@@ -376,20 +383,15 @@ public class SDEV425HW2 extends Application {
         primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent we) {
-                // Set Timezone to UTC
-                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                // Set log values
-                timestamp = sdf.format(new Date());
-                user = userTextField.getText();
-                event = "Application closed";
-                eventSuccess = true;
-                // The number of unsuccessful login attempts during this session
-                ruleInvoked = count + " unsuccessful login attempts during this session";
-                appState = "Inactive";
+                
+                // Log Close Event
                 try {
-                    log(LOG, timestamp, user, event, eventSuccess, 
-                            ruleInvoked, appState);
-                } 
+                    user = (user == null) ? "SYS" : user;
+                    Log.log(LOG, user, true, 
+                            "CLOSE", 
+                            "Application Closed", 
+                            "Default");
+                }
                 catch (IOException ioe) {
                     System.out.println("Logging error: " + ioe.getMessage());
                 }
@@ -471,73 +473,14 @@ public class SDEV425HW2 extends Application {
             loginAttempts = 3;
             stopTime = 0;
             startTime = 0;
-            user = "SYS";
-            event = "INFO--SYSTEM_LOCK_DEACTIVATED.";
-            eventSuccess = true;
-            ruleInvoked = "System Lock Lifted; lock duration exceeded";
-            appState = "System active, user status unknown";
+            
+            // Log Alert
             try {
-                log(LOG, timestamp, user, event, eventSuccess, 
-                        ruleInvoked, appState);
-            } 
+            Log.log(LOG, "SYS", true, "INFO", 
+                    "System Unlocked", "Main Page");
+            }
             catch (IOException ioe) {
                 System.out.println("Logging error: " + ioe.getMessage());
-            }
-        }
-    }
-    
-    /**
-     * <title> LOG WRITING METHOD </title>
-     * @param LOG
-     * @param timestamp
-     * @param user
-     * @param event
-     * @param eventSuccess
-     * @param ruleInvoked
-     * @param appState
-     * @throws java.io.IOException
-     */
-    public final void log(File LOG, String timestamp, String user, String event, 
-            boolean eventSuccess, String ruleInvoked, String appState) 
-            throws IOException {
-        
-        Writer out = null;
-        try {
-            // If LOG does not yet exist, create it
-            if (!LOG.exists()){
-                LOG.createNewFile();
-            }
-            // Convert Boolean to String
-            String evSuccessInStr = eventSuccess ? "true" : "false";
-            
-            // Specify UTF-8 encoding in OSW to avoid default encoding
-            // Also use "true" as second param to FOS to allow append method
-            out = new BufferedWriter(
-                    new OutputStreamWriter(
-                    new FileOutputStream(LOG, true), "UTF-8"));
-            // Write log data to log file
-            out.write("Time: " + timestamp + "\r\n");
-            out.write("Username Entered: " + user + "; Event: " + event + 
-                    "; Success: " + evSuccessInStr + "\r\n");
-            out.write("Security Rule: " + ruleInvoked + 
-                    "; Current Security State: " + appState + "\r\n");
-            
-        }
-        catch (IOException ioe) {
-            System.out.println("File writing error: "+ ioe.getMessage());
-        }
-        // Close the streams, ensure additional IOExceptions are handled
-        finally {
-            try { 
-                if (out != null) {
-                    out.flush();
-                    out.close();
-                }
-            }
-            catch(IOException ioe) {
-                System.out.println("Problem closing output streams: " + 
-                        ioe.getMessage());
-                
             }
         }
     }
