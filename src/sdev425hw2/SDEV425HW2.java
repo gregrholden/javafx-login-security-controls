@@ -13,6 +13,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -52,6 +53,8 @@ public class SDEV425HW2 extends Application {
     // Increment counter
     private int loginAttempts = 3;
     private int count = 0;
+    
+    private int authCounter = 0;
     
     // Create timer
     private boolean timerOn = false;
@@ -119,13 +122,11 @@ public class SDEV425HW2 extends Application {
                         pwBox.getText());
                 // Check if timerOn and loginAttempts need to be reset
                 timerResetCheck(timerOn);
-                // FOR TESTING PURPOSES ONLY
-                System.out.println("Timer is on: " + timerOn);
                 // Check if loginAttempts remain
                 if (loginAttempts != 0) {
                     // If valid clear the grid and Welcome the user
                     if (isValid) {
-                        // Set log variables
+                        // ADD TO AUDIT LOG
                         user = userTextField.getText();
                         event = "login attempt";
                         eventSuccess = true;
@@ -142,6 +143,7 @@ public class SDEV425HW2 extends Application {
                         // Reset login counter on authenticated logon
                         loginAttempts = 3;
                         
+                        // SYSTEM USE NOTIFICATION
                         // Hide main grid
                         grid.setVisible(false);
                         // Write system use notification to a new GridPane
@@ -171,11 +173,15 @@ public class SDEV425HW2 extends Application {
                                 + "be used to stare at the welcome message it "
                                 + "generates. Enjoy!");
                         grid3.add(notification5, 0, 5, 2, 1);
-                        Button agree = new Button("I Agree to These Terms");
-                        grid3.add(agree, 1, 7);
+                        Text notification6 = new Text("BEFORE ALLOWED ACCESS,"
+                                + "ALL USERS MUST AGREE TO THE ABOVE TERMS AND"
+                                + "AUTHENTICATE THEIR ACCOUNTS:");
+                        grid3.add(notification6, 0, 6, 2, 1);
+                        Button agree = new Button("I Agree: AUTHENTICATE ME");
+                        grid3.add(agree, 1, 8);
                         
                         // Define parameter of new GridPane and show() it
-                        Scene scene = new Scene(grid3, 650, 400);
+                        Scene scene = new Scene(grid3, 650, 450);
                         primaryStage.setScene(scene);
                         primaryStage.show();
                         
@@ -183,9 +189,19 @@ public class SDEV425HW2 extends Application {
                         agree.setOnAction(new EventHandler<ActionEvent>() {
                             @Override
                             public void handle(ActionEvent ae) {
+                                
+                                // MULTI-FACTOR AUTHENTICATION
+                                // Generate Random Auth Token
+                                String token = generateRandomToken();
+                                // Mail Authentication Code to Registered Account
+                                JavaMailer.mailAuthenticator("gregrholden@gmail.com",
+                                        "gregrholden@gmail.com", "Lilach_83", 
+                                        "SDEV425: User Authentication", token);
+                                
+                                // ADD TO AUDIT LOG
                                 // Log user consent
                                 user = userTextField.getText();
-                                event = "INFO--USER_CONSENT_GRANTED";
+                                event = "INFO--USER_CONSENT_GRANTED: AUTHENTICATION_TOKEN_SENT";
                                 eventSuccess = true;
                                 ruleInvoked = "AC-8: System Use Notification";
                                 appState = "Active User";
@@ -196,24 +212,80 @@ public class SDEV425HW2 extends Application {
                                 catch (IOException ioe) {
                                     System.out.println("Logging error: " + ioe.getMessage());
                                 }
+                                
+                                // GET AUTHENTICATION FROM USER
                                 // Make grid3 invisible
                                 grid3.setVisible(false);
-                                // Create new GridPane to display welcome message
-                                GridPane grid2 = new GridPane();
-                                // Align to Center
-                                // Note Position is geometric object for alignment
-                                grid2.setAlignment(Pos.CENTER);
-                                 // Set gap between the components
-                                // Larger numbers mean bigger spaces
-                                grid2.setHgap(10);
-                                grid2.setVgap(10);
-                                Text scenetitle = new Text("Welcome " + 
-                                        userTextField.getText() + "!");
+                                // Create New Grid with Authentication Token Input
+                                GridPane grid4 = new GridPane();
+                                grid4.setAlignment(Pos.CENTER);
+                                grid4.setHgap(10);
+                                grid4.setVgap(10);
+                                // Create some text to place in the scene
+                                Text scenetitle = new Text("An email with an "
+                                        + "authentication code was sent");
                                 // Add text to grid 0,0 span 2 columns, 1 row
-                                grid2.add(scenetitle, 0, 0, 2, 1);
-                                Scene scene = new Scene(grid2, 500, 400);
+                                grid4.add(scenetitle, 0, 0, 2, 1);
+                                Label code = new Label("Enter Code: ");
+                                grid4.add(code, 0, 1);
+                                // Create input field with hidden feedback
+                                PasswordField authToken = new PasswordField();
+                                grid4.add(authToken, 1, 1);
+                                Button authBtn = new Button("Authenticate");
+                                grid4.add(authBtn, 1, 2);
+                                Text actiontarget = new Text();
+                                grid4.add(actiontarget, 0, 4);
+                                
+                                // Define parameter of new GridPane and show() it
+                                Scene scene = new Scene(grid4, 300, 200);
                                 primaryStage.setScene(scene);
                                 primaryStage.show();
+                                
+                                // Event Handler for Authentication Button
+                                authBtn.setOnAction(new EventHandler<ActionEvent>() {
+                                    @Override
+                                    public void handle(ActionEvent auth) {
+                                        // Check that token and user auth code match
+                                        String userAuth = authToken.getText();
+                                        // If Authentic User:
+                                        if (userAuth.equals(token)) {
+                                            authCounter = 0; // reset counter
+                                            grid4.setVisible(false);
+                                            // Create new GridPane to display welcome message
+                                            GridPane grid2 = new GridPane();
+                                            // Align to Center
+                                            // Note Position is geometric object for alignment
+                                            grid2.setAlignment(Pos.CENTER);
+                                             // Set gap between the components
+                                            // Larger numbers mean bigger spaces
+                                            grid2.setHgap(10);
+                                            grid2.setVgap(10);
+                                            Text scenetitle = new Text("Welcome " + 
+                                                    userTextField.getText() + "!");
+                                            // Add text to grid 0,0 span 2 columns, 1 row
+                                            grid2.add(scenetitle, 0, 0, 2, 1);
+                                            Scene scene = new Scene(grid2, 500, 400);
+                                            primaryStage.setScene(scene);
+                                            primaryStage.show();
+                                        // If Not Authentic User:
+                                        } else {
+                                            authCounter++;
+                                            if (authCounter <= 3) {
+                                                final Text actiontarget = new Text();
+                                                actiontarget.setFill(Color.FIREBRICK);
+                                                actiontarget.setText("Incorrect Code");
+                                                grid4.add(actiontarget, 1, 4);
+                                            } else {
+                                                grid4.getChildren().clear();
+                                                final Text actiontarget = new Text();
+                                                actiontarget.setFill(Color.FIREBRICK);
+                                                actiontarget.setText("System Locked. Please Exit.");
+                                                grid4.add(actiontarget, 0, 1, 2, 1);
+                                            }
+                                            
+                                        }
+                                    }
+                                });
                             }
                         });
                         
@@ -328,6 +400,29 @@ public class SDEV425HW2 extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+    
+    public String generateRandomToken() {
+        String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lower = upper.toLowerCase(Locale.ROOT);
+        String nums = "0123456789";
+        String alphaNum = upper.concat(lower).concat(nums);
+        // Random number between 5 and 10 for size of token
+        Integer size = (int) (Math.random() * 6 + 5);
+        // Initialize char array of that size
+        char[] randChars = new char[size];
+        // Transform string of all alpha numeric characters to char array
+        char[] alphaNumArr = alphaNum.toCharArray();
+        
+        // Use loop to create random array of chars
+        for (int i = 0; i < size; i++) {
+            int entry = (int) (Math.random() * alphaNumArr.length);
+            randChars[i] = alphaNumArr[entry];
+        }
+        // Convert array of chars back to string
+        String token = new String(randChars);
+        
+        return token;
+    }
 
     /**
      * @param args the command line arguments
@@ -389,7 +484,7 @@ public class SDEV425HW2 extends Application {
             }
         }
     }
-   
+    
     /**
      * <title> LOG WRITING METHOD </title>
      * @param LOG
