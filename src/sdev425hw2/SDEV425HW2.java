@@ -401,6 +401,7 @@ public class SDEV425HW2 extends Application {
         primaryStage.show();
     }
     
+    // Generates a Random String for Use as an Authentication Token
     public String generateRandomToken() {
         String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         String lower = upper.toLowerCase(Locale.ROOT);
