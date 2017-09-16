@@ -188,7 +188,7 @@ public class SDEV425HW2 extends Application {
                         String token = generateRandomToken();
                         
                         // Mail Authentication Code to Registered Account
-                        /* COMMENTED OUT / INSERT OWN GMAIL CREDENTIALS TO FIX
+                        /* UNCOMMENT AND INSERT OWN GMAIL CREDENTIALS TO USE
                         JavaMailer.mailAuthenticator(
                                 "FROM@gmail.com",               // FROM
                                 "TO@gmail.com",                 // TO
