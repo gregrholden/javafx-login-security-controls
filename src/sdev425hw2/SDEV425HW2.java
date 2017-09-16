@@ -1,7 +1,13 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * Course: UMUC, SDEV 425: Mitigating Software Vulnerabilities
+ * Professor: Gary Harris
+ * Semester: Fall 2017, OL1
+ * 
+ * Author: Greg Holden
+ * Assignment #2: Apply Low-Impact Security Controls
+ * Date: September 16, 2017
+ * Due Date: September 17, 2017
+ * 
  */
 package sdev425hw2;
 
@@ -25,7 +31,9 @@ import javafx.stage.WindowEvent;
 
 
 /**
- *
+ * NOTE: JavaMailer method call not currently functional on lines 192-198. 
+ * Uncomment and insert your own Gmail credentials to fix JavaMailer call.
+ * 
  * @author Greg Holden
  */
 public class SDEV425HW2 extends Application {
@@ -40,7 +48,6 @@ public class SDEV425HW2 extends Application {
     
     // Increment counter
     private int loginAttempts = 3;
-    
     private int authCounter = 0;
     
     // Create timer
@@ -82,6 +89,9 @@ public class SDEV425HW2 extends Application {
         // Add label to grid 0,2
         grid.add(pw, 0, 2);
 
+        ///////////////////////////////////
+        // IA-6: AUTHENTICATOR FEEDBACK //
+        ///////////////////////////////////
         // Create Passwordfield
         PasswordField pwBox = new PasswordField();
         // Add Password field to grid 1,2
@@ -108,18 +118,25 @@ public class SDEV425HW2 extends Application {
             if (loginAttempts != 0) {
                 // If valid clear the grid and Welcome the user
                 if (isValid) {
-                    // Log Successful Logon
+                    
+                    // AU-3: Log Successful Logon
                     try {
-                        Log.log(LOG, user, true, "ACCESS",
-                                "Non-authenticated Logon", "Main");
+                        Log.log(LOG, user, true, 
+                                "ACCESS",
+                                "Non-authenticated Logon", 
+                                "Main");
                     }
                     catch (IOException ioe) {
                         System.out.println("Logging error: " +
                                 ioe.getMessage());
                     }
+                    
                     // Reset login counter on authenticated logon
                     loginAttempts = 3;
-                    // SYSTEM USE NOTIFICATION
+                    
+                    ///////////////////////////////////
+                    // AC-8: SYSTEM USE NOTIFICATION //
+                    ///////////////////////////////////
                     // Hide main grid
                     grid.setVisible(false);
                     // Write system use notification to a new GridPane
@@ -163,23 +180,36 @@ public class SDEV425HW2 extends Application {
                     // Lambda
                     // Button event handler
                     agree.setOnAction((ActionEvent ae) -> {
-                        // MULTI-FACTOR AUTHENTICATION
+                        
+                        ///////////////////////////////////////////
+                        // IA-2(1): MULTI-FACTOR AUTHENTICATION ///
+                        ///////////////////////////////////////////
                         // Generate Random Auth Token
                         String token = generateRandomToken();
+                        
                         // Mail Authentication Code to Registered Account
-                        JavaMailer.mailAuthenticator("gregrholden@gmail.com",
-                                "gregrholden@gmail.com", "Lilach_83",
-                                "SDEV425: User Authentication", token);
-                        // Log Info Message
+                        /* COMMENTED OUT / INSERT OWN GMAIL CREDENTIALS TO FIX
+                        JavaMailer.mailAuthenticator(
+                                "FROM@gmail.com",               // FROM
+                                "TO@gmail.com",                 // TO
+                                "password",                     // Gmail Password
+                                "SDEV425: User Authentication", // Subject Line
+                                token                           // Auth token
+                        );                         
+                        */
+                        
+                        // AU-3: Log Info Message
                         try {
-                            Log.log(LOG, user, true, "INFO",
+                            Log.log(LOG, user, true, 
+                                    "INFO",
                                     "Consent Granted, Auth Token Sent",
-                                    "Use Notification");
+                                    "Notification");
                         }
                         catch (IOException ioe) {
                             System.out.println("Logging error: " +
                                     ioe.getMessage());
                         }
+                        
                         // GET AUTHENTICATION FROM USER
                         // Make grid3 invisible
                         grid3.setVisible(false);
@@ -195,9 +225,15 @@ public class SDEV425HW2 extends Application {
                         grid4.add(scenetitle1, 0, 0, 2, 1);
                         Label code = new Label("Enter Code: ");
                         grid4.add(code, 0, 1);
+                        
+                        ///////////////////////////////////
+                        // IA-6: AUTHENTICATOR FEEDBACK //
+                        ///////////////////////////////////
                         // Create input field with hidden feedback
                         PasswordField authToken = new PasswordField();
                         grid4.add(authToken, 1, 1);
+                        
+                        
                         Button authBtn = new Button("Authenticate");
                         grid4.add(authBtn, 1, 2);
                         Text actiontarget1 = new Text();
@@ -214,9 +250,11 @@ public class SDEV425HW2 extends Application {
                             String userAuth = authToken.getText();
                             // If Authentic User:
                             if (userAuth.equals(token)) {
-                                // Log Access Message
+                                
+                                // AU-3: Log Access Message
                                 try {
-                                    Log.log(LOG, user, true, "ACCESS",
+                                    Log.log(LOG, user, true, 
+                                            "ACCESS",
                                             "Authenticated Logon",
                                             "Authentication");
                                 }
@@ -224,6 +262,7 @@ public class SDEV425HW2 extends Application {
                                     System.out.println("Logging error: " +
                                             ioe.getMessage());
                                 }
+                                
                                 authCounter = 0; // reset counter
                                 grid4.setVisible(false);
                                 // Create new GridPane to display welcome message
@@ -247,7 +286,8 @@ public class SDEV425HW2 extends Application {
                             } else {
                                 authCounter++;
                                 if (authCounter <= 3) {
-                                    // Log Alert
+                                    
+                                    // AU-3: Log Alert
                                     try {
                                         Log.log(LOG, user, false,
                                                 "ALERT",
@@ -258,12 +298,14 @@ public class SDEV425HW2 extends Application {
                                         System.out.println("Logging error: " +
                                                 ioe.getMessage());
                                     }
+                                    
                                     final Text actiontarget2 = new Text();
                                     actiontarget2.setFill(Color.FIREBRICK);
                                     actiontarget2.setText("Incorrect Code");
                                     grid4.add(actiontarget2, 1, 4);
                                 } else {
-                                    // Log Alert
+                                    
+                                    // AU-3: Log Alert
                                     try {
                                         Log.log(LOG, user, false,
                                                 "ALERT",
@@ -274,6 +316,7 @@ public class SDEV425HW2 extends Application {
                                         System.out.println("Logging error: " +
                                                 ioe.getMessage());
                                     }
+                                    
                                     grid4.getChildren().clear();
                                     final Text actiontarget3 = new Text();
                                     actiontarget3.setFill(Color.FIREBRICK);
@@ -287,18 +330,20 @@ public class SDEV425HW2 extends Application {
                     // If Invalid Ask user to try again
                 } else {
                     // Decrement loginAttempts available on unsuccessful attempt
-                    loginAttempts--;                    
-                    // Log Alert
+                    loginAttempts--;
+                    
+                    // AU-3: Log Alert
                     try {
                         Log.log(LOG, user, false,
                                 "ALERT",
                                 "Unsuccessful Logon Attempt",
-                                "Main Page");
+                                "Main");
                     }
                     catch (IOException ioe) {
                         System.out.println("Logging error: " + 
                                 ioe.getMessage());
                     }
+                    
                     final Text actiontarget4 = new Text();
                     // Clear gridpane to remove actiontarget message
                     grid.getChildren().clear();
@@ -321,7 +366,8 @@ public class SDEV425HW2 extends Application {
                 startTime = new Date().getTime(); // start of timer
                 stopTime = startTime + 30000; // end of timer period
                 timerOn = isTimerOn(stopTime); // turn timerOn to 'true'
-                // Log Alert
+                
+                // AU-3: Log Alert
                 try {
                     Log.log(LOG, user, false,
                             "ALERT",
@@ -332,6 +378,7 @@ public class SDEV425HW2 extends Application {
                     System.out.println("Logging error: " +
                             ioe.getMessage());
                 }
+                
                 // Recreate GridPane nodes
                 final Text actiontarget5 = new Text();
                 // Clear gridpane to remove actiontarget message
@@ -352,7 +399,8 @@ public class SDEV425HW2 extends Application {
         // Lambda
         // Add to the log the data of when the app is closed
         primaryStage.setOnCloseRequest((WindowEvent we) -> {
-            // Log Close Event
+            
+            // AU-3: Log Close Event
             try {
                 user = (user == null) ? "SYS" : user;
                 Log.log(LOG, user, true,
@@ -363,6 +411,7 @@ public class SDEV425HW2 extends Application {
             catch (IOException ioe) {
                 System.out.println("Logging error: " + ioe.getMessage());
             }
+            
         });
         
         // Set the size of Scene
@@ -375,6 +424,9 @@ public class SDEV425HW2 extends Application {
      * 
      * @return 
      */
+    /////////////////////////////////////////////////////
+    // USED IN IA-2(1): IDENTIFICATION AND AUTHENTICATION
+    /////////////////////////////////////////////////////
     // Generates a Random String for Use as an Authentication Token
     public String generateRandomToken() {
         String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -426,6 +478,9 @@ public class SDEV425HW2 extends Application {
      * @param stopTime
      * @return 
      */
+    ////////////////////////////////////////////
+    // USED IN AC-7: UNSUCCESSFUL LOGON ATTEMPTS
+    ////////////////////////////////////////////
     // Timer method to check if 30 second duration has been met.
     // Returns true if login function is currently being blocked.
     public boolean isTimerOn(long stopTime) {
@@ -445,6 +500,9 @@ public class SDEV425HW2 extends Application {
      * 
      * @param timerOn 
      */
+    ////////////////////////////////////////////
+    // USED IN AC-7: UNSUCCESSFUL LOGON ATTEMPTS
+    ////////////////////////////////////////////
     // Method to reset login attempt counter and timerOn variables
     public void timerResetCheck(boolean timerOn) {
         // If the timerOn was switched to true, but now it's switched off
@@ -455,10 +513,12 @@ public class SDEV425HW2 extends Application {
             stopTime = 0;
             startTime = 0;
             
-            // Log Alert
+            // AU-3: Log Alert
             try {
-            Log.log(LOG, "SYS", true, "INFO", 
-                    "System Unlocked", "Main Page");
+            Log.log(LOG, "SYS", true, 
+                    "INFO", 
+                    "System Unlocked", 
+                    "Main");
             }
             catch (IOException ioe) {
                 System.out.println("Logging error: " + ioe.getMessage());
